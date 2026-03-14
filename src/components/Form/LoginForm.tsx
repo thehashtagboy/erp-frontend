@@ -8,7 +8,7 @@ export default function LoginForm() {
 
           <div className="w-full max-w-md border border-gray-300 border-t-8 border-t-blue-500 rounded-xl px-15 py-23 bg-white">
 
-            <h5 className="text-3xl font-bold mb-4">Login</h5>
+            <h5 className="text-2xl font-bold mb-3">Login</h5>
             <input type="text" placeholder="Username" className="input w-full mb-3" />
             <input type="password" placeholder="Password" className="input password w-full mb-2" />
             <div className="grid grid-cols-2 justify-between items-center">
