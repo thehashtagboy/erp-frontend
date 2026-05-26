@@ -6,11 +6,18 @@ export default function LoginForm() {
       <div className="container mx-auto">
         <div className="flex justify-center items-center py-10">
 
-          <div className="w-full max-w-md border border-gray-300 border-t-8 border-t-blue-500 rounded-xl px-15 py-23 bg-white">
+          <div className="w-sm max-w-md border border-gray-300 border-t-8 border-t-blue-500 rounded-xl px-15 py-23 bg-white">
 
-            <h5 className="text-2xl font-bold mb-3">Login</h5>
-            <input type="text" placeholder="Username" className="input w-full mb-3" />
-            <input type="password" placeholder="Password" className="input password w-full mb-2" />
+            <h5 className="text-2xl font-bold mb-1">Login</h5>
+            <p className="text-xs text-slate-500 mb-3">Enter your username and password.</p>
+            <label className="floating-label">
+              <span>Username</span>
+              <input type="text" placeholder="Username" className="input w-full mb-3" />
+            </label>
+            <label className="floating-label">
+              <span>Password</span>
+              <input type="password" placeholder="Password" className="input password w-full mb-2" />
+            </label>
             <div className="grid grid-cols-2 justify-between items-center">
               <div>
                 <input type="checkbox" className="checkbox checkbox-sm text-xs" />
