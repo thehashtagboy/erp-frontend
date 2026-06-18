@@ -11,6 +11,29 @@ export interface UserDTO {
   phoneNumber?: string;
   address?: string;
   status?: 'ACTIVE' | 'LOCKED';
+
+  // Demographic / LOV Fields
+  salutation?: string;
+  civilStatus?: string;
+  gender?: string;
+  nationality?: string;
+  
+  // Geographic / LOV Fields
+  country?: string;
+  stateProvince?: string;
+  city?: string;
+
+  // Employment / LOV Fields
+  employmentStatus?: string;
+  employmentType?: string;
+  department?: string;
+  positionLevel?: string;
+  shiftType?: string;
+  payFrequency?: string;
+
+  // Dates
+  birthDate?: string;
+  dateHired?: string;
 }
 
 export interface CreateUserRequest {
@@ -22,6 +45,22 @@ export interface CreateUserRequest {
   phoneNumber?: string;
   address?: string;
   roleName?: string;
+
+  salutation?: string;
+  civilStatus?: string;
+  gender?: string;
+  nationality?: string;
+  country?: string;
+  stateProvince?: string;
+  city?: string;
+  employmentStatus?: string;
+  employmentType?: string;
+  department?: string;
+  positionLevel?: string;
+  shiftType?: string;
+  payFrequency?: string;
+  birthDate?: string;
+  dateHired?: string;
 }
 
 export interface UpdateUserRequest {
@@ -32,6 +71,22 @@ export interface UpdateUserRequest {
   phoneNumber?: string;
   address?: string;
   roleName?: string;
+
+  salutation?: string;
+  civilStatus?: string;
+  gender?: string;
+  nationality?: string;
+  country?: string;
+  stateProvince?: string;
+  city?: string;
+  employmentStatus?: string;
+  employmentType?: string;
+  department?: string;
+  positionLevel?: string;
+  shiftType?: string;
+  payFrequency?: string;
+  birthDate?: string;
+  dateHired?: string;
 }
 
 export interface RoleDTO {
@@ -39,3 +94,12 @@ export interface RoleDTO {
   name: string;
   description?: string;
 }
+
+export interface LovDTO {
+  id?: string | number;
+  lovType: string;
+  lovKey: string;
+  lovValue: string;
+  parentKey?: string;
+}
+

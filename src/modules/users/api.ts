@@ -1,5 +1,5 @@
 import { apiClient } from "../../app/apiClient";
-import type { UserDTO, CreateUserRequest, UpdateUserRequest, RoleDTO } from "./types";
+import type { UserDTO, CreateUserRequest, UpdateUserRequest, RoleDTO, LovDTO } from "./types";
 
 export const fetchUsers = async (): Promise<UserDTO[]> => {
   const response = await apiClient.get<UserDTO[]>("/api/users");
@@ -27,5 +27,15 @@ export const deleteUser = async (id: string): Promise<void> => {
 
 export const fetchRoles = async (): Promise<RoleDTO[]> => {
   const response = await apiClient.get<RoleDTO[]>("/api/roles");
+  return response.data;
+};
+
+export const fetchLov = async (type: string, parentKey?: string): Promise<LovDTO[]> => {
+  const params = new URLSearchParams();
+  params.append("type", type);
+  if (parentKey) {
+    params.append("parentKey", parentKey);
+  }
+  const response = await apiClient.get<LovDTO[]>(`/api/lov?${params.toString()}`);
   return response.data;
 };

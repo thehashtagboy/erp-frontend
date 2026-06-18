@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import { fetchUserById, createUser, updateUser, fetchRoles } from "./api";
-import type { CreateUserRequest, UpdateUserRequest } from "./types";
-
-type FormFieldName = "firstName" | "lastName" | "email" | "username" | "password" | "phoneNumber" | "address" | "roleName";
+import { fetchUserById, createUser, updateUser, fetchRoles, fetchLov } from "./api";
+import type { CreateUserRequest, UpdateUserRequest, LovDTO } from "./types";
 
 export default function UserFormPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isEditMode = !!id;
 
-  const [formData, setFormData] = useState<Record<FormFieldName, string>>({
+  const [formData, setFormData] = useState<Partial<CreateUserRequest>>({
     firstName: "",
     lastName: "",
     email: "",
@@ -20,9 +18,39 @@ export default function UserFormPage() {
     phoneNumber: "",
     address: "",
     roleName: "",
+    salutation: "",
+    civilStatus: "",
+    gender: "",
+    nationality: "",
+    country: "",
+    stateProvince: "",
+    city: "",
+    employmentStatus: "",
+    employmentType: "",
+    department: "",
+    positionLevel: "",
+    shiftType: "",
+    payFrequency: "",
+    birthDate: "",
+    dateHired: "",
   });
 
   const [roles, setRoles] = useState<string[]>([]);
+  // LOV states
+  const [salutations, setSalutations] = useState<LovDTO[]>([]);
+  const [civilStatuses, setCivilStatuses] = useState<LovDTO[]>([]);
+  const [genders, setGenders] = useState<LovDTO[]>([]);
+  const [nationalities, setNationalities] = useState<LovDTO[]>([]);
+  const [countries, setCountries] = useState<LovDTO[]>([]);
+  const [states, setStates] = useState<LovDTO[]>([]);
+  const [cities, setCities] = useState<LovDTO[]>([]);
+  const [employmentStatuses, setEmploymentStatuses] = useState<LovDTO[]>([]);
+  const [employmentTypes, setEmploymentTypes] = useState<LovDTO[]>([]);
+  const [departments, setDepartments] = useState<LovDTO[]>([]);
+  const [positionLevels, setPositionLevels] = useState<LovDTO[]>([]);
+  const [shiftTypes, setShiftTypes] = useState<LovDTO[]>([]);
+  const [payFrequencies, setPayFrequencies] = useState<LovDTO[]>([]);
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,30 +65,57 @@ export default function UserFormPage() {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        const rolesData = await fetchRoles();
+        const [
+          rolesData,
+          salut,
+          civil,
+          gend,
+          natio,
+          countr,
+          empStat,
+          empType,
+          dept,
+          posLev,
+          shift,
+          payFreq
+        ] = await Promise.all([
+          fetchRoles().catch(() => []),
+          fetchLov("SALUTATION").catch(() => []),
+          fetchLov("CIVIL_STATUS").catch(() => []),
+          fetchLov("GENDER").catch(() => []),
+          fetchLov("NATIONALITY").catch(() => []),
+          fetchLov("COUNTRY").catch(() => []),
+          fetchLov("EMPLOYMENT_STATUS").catch(() => []),
+          fetchLov("EMPLOYMENT_TYPE").catch(() => []),
+          fetchLov("DEPARTMENT").catch(() => []),
+          fetchLov("POSITION_LEVEL").catch(() => []),
+          fetchLov("SHIFT_TYPE").catch(() => []),
+          fetchLov("PAY_FREQUENCY").catch(() => [])
+        ]);
+
         const availableRoles = rolesData && rolesData.length > 0 
           ? rolesData.map((r) => r.name)
-          : [
-              "ROLE_SUPER_ADMIN",
-              "ROLE_ADMIN",
-              "ROLE_HR_MANAGER",
-              "ROLE_INVENTORY_MANAGER",
-              "ROLE_CASHIER",
-              "ROLE_EMPLOYEE",
-            ];
+          : ["ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ROLE_HR_MANAGER", "ROLE_INVENTORY_MANAGER", "ROLE_CASHIER", "ROLE_EMPLOYEE"];
+        
         setRoles(availableRoles);
+        setSalutations(salut);
+        setCivilStatuses(civil);
+        setGenders(gend);
+        setNationalities(natio);
+        setCountries(countr);
+        setEmploymentStatuses(empStat);
+        setEmploymentTypes(empType);
+        setDepartments(dept);
+        setPositionLevels(posLev);
+        setShiftTypes(shift);
+        setPayFrequencies(payFreq);
 
         if (isEditMode && id) {
           const user = await fetchUserById(id);
           setFormData({
-            firstName: user.firstName || "",
-            lastName: user.lastName || "",
-            email: user.email || "",
-            username: user.username || "",
+            ...user,
             password: "",
-            phoneNumber: user.phoneNumber || "",
-            address: user.address || "",
-            roleName: user.roleName || availableRoles[0],
+            roleName: user.roleName || availableRoles[0]
           });
         } else {
           setFormData((prev) => ({ ...prev, roleName: availableRoles[0] }));
@@ -76,6 +131,29 @@ export default function UserFormPage() {
     loadData();
   }, [id, isEditMode]);
 
+  // Handle cascading LOVs when Country changes
+  useEffect(() => {
+    const loadStatesAndCities = async () => {
+      if (formData.country) {
+        try {
+          const [statesData, citiesData] = await Promise.all([
+            fetchLov("STATE_PROVINCE", formData.country),
+            fetchLov("CITY", formData.country)
+          ]);
+          setStates(statesData);
+          setCities(citiesData);
+        } catch (err) {
+          console.error("Failed to load states and cities", err);
+        }
+      } else {
+        setStates([]);
+        setCities([]);
+        setFormData(prev => ({ ...prev, stateProvince: "", city: "" }));
+      }
+    };
+    loadStatesAndCities();
+  }, [formData.country]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -90,11 +168,11 @@ export default function UserFormPage() {
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    if (!formData.firstName.trim()) newErrors.firstName = "First name is required";
-    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
-    if (!formData.username.trim()) newErrors.username = "Username is required";
+    if (!formData.firstName?.trim()) newErrors.firstName = "First name is required";
+    if (!formData.lastName?.trim()) newErrors.lastName = "Last name is required";
+    if (!formData.username?.trim()) newErrors.username = "Username is required";
 
-    if (!formData.email.trim()) {
+    if (!formData.email?.trim()) {
       newErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Email format is invalid";
@@ -114,23 +192,19 @@ export default function UserFormPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!validate()) {
+      showToast("Please fill in all required fields.", "error");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
       if (isEditMode && id) {
-        const updatePayload: UpdateUserRequest = {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          username: formData.username,
-          phoneNumber: formData.phoneNumber,
-          address: formData.address,
-          roleName: formData.roleName,
-        };
-        await updateUser(id, updatePayload);
+        const rest = { ...formData };
+        delete rest.password;
+        await updateUser(id, rest as UpdateUserRequest);
       } else {
-        const createPayload: CreateUserRequest = { ...formData };
+        const createPayload = { ...formData } as CreateUserRequest;
         await createUser(createPayload);
       }
       navigate("/users", { state: { message: isEditMode ? "Profile updated successfully" : "User onboarded successfully" } });
@@ -154,17 +228,43 @@ export default function UserFormPage() {
     );
   }
 
-  const formFields = [
-    { name: "firstName", label: "First Name *", type: "text", gridClass: "col-span-1" },
-    { name: "lastName", label: "Last Name *", type: "text", gridClass: "col-span-1" },
-    { name: "email", label: "Email Address *", type: "email", gridClass: "col-span-2" },
-    { name: "username", label: "Username *", type: "text", gridClass: isEditMode ? "col-span-2" : "col-span-2 md:col-span-1" },
-    ...(!isEditMode ? [{ name: "password", label: "Password *", type: "password", gridClass: "col-span-2 md:col-span-1" }] : []),
-    { name: "phoneNumber", label: "Phone Number", type: "text", gridClass: "col-span-2 md:col-span-1", placeholder: "+1 (555) 000-0000" },
-  ];
+  const renderInput = (name: string, label: string, type: string = "text", placeholder: string = "", required: boolean = false) => (
+    <div className="form-control w-full">
+      <label className="label label-text font-medium pb-1">{label} {required && <span className="text-error">*</span>}</label>
+      <input
+        type={type}
+        name={name}
+        value={(formData as Record<string, string>)[name] || ""}
+        onChange={handleChange}
+        placeholder={placeholder}
+        className={`input input-bordered w-full ${errors[name] ? "input-error" : ""}`}
+      />
+      {errors[name] && <span className="text-error text-xs mt-1 block">{errors[name]}</span>}
+    </div>
+  );
+
+  const renderSelect = (name: string, label: string, options: LovDTO[] | string[], required: boolean = false, isSimpleString: boolean = false) => (
+    <div className="form-control w-full">
+      <label className="label label-text font-medium pb-1">{label} {required && <span className="text-error">*</span>}</label>
+      <select
+        name={name}
+        value={(formData as Record<string, string>)[name] || ""}
+        onChange={handleChange}
+        className={`select select-bordered w-full ${errors[name] ? "select-error" : ""}`}
+      >
+        <option value="" disabled>Select {label}</option>
+        {isSimpleString ? (options as string[]).map((opt) => (
+          <option key={opt} value={opt}>{opt.replace("ROLE_", "").replace("_", " ")}</option>
+        )) : (options as LovDTO[]).map((opt) => (
+          <option key={opt.lovKey} value={opt.lovKey}>{opt.lovValue}</option>
+        ))}
+      </select>
+      {errors[name] && <span className="text-error text-xs mt-1 block">{errors[name]}</span>}
+    </div>
+  );
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 animate-fade-in">
+    <div className="max-w-5xl mx-auto space-y-8 animate-fade-in pb-10">
       {toast && (
         <div className="toast toast-top toast-end z-[100]">
           <div className={`alert ${toast.type === "error" ? "alert-error" : toast.type === "info" ? "alert-info" : "alert-success"} shadow-lg rounded-xl`}>
@@ -189,71 +289,70 @@ export default function UserFormPage() {
         </div>
       </div>
 
-      <div className="bg-base-100 border shadow-sm rounded-3xl p-6 md:p-8">
-        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-6 gap-y-4">
-          {formFields.map((field) => (
-            <div key={field.name} className={field.gridClass}>
-              <label className="label label-text font-medium pb-1">{field.label}</label>
-              <input
-                type={field.type}
-                name={field.name}
-                value={formData[field.name as FormFieldName] || ""}
-                onChange={handleChange}
-                placeholder={field.placeholder}
-                className={`input input-bordered w-full ${errors[field.name] ? "input-error" : ""}`}
-              />
-              {errors[field.name] && (
-                <span className="text-error text-xs mt-1 block">{errors[field.name]}</span>
-              )}
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Core & Security */}
+        <div className="bg-base-100 border shadow-sm rounded-3xl p-6 md:p-8">
+          <h2 className="text-xl font-bold mb-6 text-base-content border-b pb-2">Core & Security</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {renderInput("firstName", "First Name", "text", "", true)}
+            {renderInput("lastName", "Last Name", "text", "", true)}
+            {renderInput("username", "Username", "text", "", true)}
+            {renderInput("email", "Email Address", "email", "", true)}
+            {!isEditMode && renderInput("password", "Password", "password", "", true)}
+            {renderSelect("roleName", "System Role", roles, true, true)}
+          </div>
+        </div>
+
+        {/* Personal Details */}
+        <div className="bg-base-100 border shadow-sm rounded-3xl p-6 md:p-8">
+          <h2 className="text-xl font-bold mb-6 text-base-content border-b pb-2">Personal Details</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {renderSelect("salutation", "Salutation", salutations)}
+            {renderSelect("gender", "Gender", genders)}
+            {renderSelect("civilStatus", "Civil Status", civilStatuses)}
+            {renderSelect("nationality", "Nationality", nationalities)}
+            {renderInput("birthDate", "Birth Date", "date")}
+            {renderInput("phoneNumber", "Phone Number", "text", "+1 (555) 000-0000")}
+          </div>
+        </div>
+
+        {/* Geographic Information */}
+        <div className="bg-base-100 border shadow-sm rounded-3xl p-6 md:p-8">
+          <h2 className="text-xl font-bold mb-6 text-base-content border-b pb-2">Geographic Information</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {renderSelect("country", "Country", countries)}
+            {renderSelect("stateProvince", "State / Province", states)}
+            {renderSelect("city", "City", cities)}
+            <div className="md:col-span-3">
+              {renderInput("address", "Full Address", "text", "123 Main St...")}
             </div>
-          ))}
-
-          {/* Role Dropdown */}
-          <div className="col-span-2 md:col-span-1">
-            <label className="label label-text font-medium pb-1">Role *</label>
-            <select
-              name="roleName"
-              value={formData.roleName}
-              onChange={handleChange}
-              className="select select-bordered w-full"
-            >
-              {roles.map((r) => (
-                <option key={r} value={r}>
-                  {r.replace("ROLE_", "").replace("_", " ")}
-                </option>
-              ))}
-            </select>
           </div>
+        </div>
 
-          {/* Address */}
-          <div className="col-span-2">
-            <label className="label label-text font-medium pb-1">Address</label>
-            <input
-              type="text"
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              placeholder="123 Main St, City, Country"
-              className="input input-bordered w-full"
-            />
+        {/* Employment Details */}
+        <div className="bg-base-100 border shadow-sm rounded-3xl p-6 md:p-8">
+          <h2 className="text-xl font-bold mb-6 text-base-content border-b pb-2">Employment Details</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {renderSelect("employmentStatus", "Employment Status", employmentStatuses)}
+            {renderSelect("employmentType", "Employment Type", employmentTypes)}
+            {renderSelect("department", "Department", departments)}
+            {renderSelect("positionLevel", "Position Level", positionLevels)}
+            {renderSelect("shiftType", "Shift Type", shiftTypes)}
+            {renderSelect("payFrequency", "Pay Frequency", payFrequencies)}
+            {renderInput("dateHired", "Date Hired", "date")}
           </div>
+        </div>
 
-          <div className="col-span-2 border-t mt-6 pt-6 flex justify-end gap-3">
-            <button type="button" onClick={() => navigate("/users")} disabled={isSubmitting} className="btn btn-outline rounded-xl">
-              Cancel
-            </button>
-            <button type="submit" disabled={isSubmitting} className="btn btn-primary rounded-xl px-8 shadow-sm">
-              {isSubmitting ? (
-                <span className="loading loading-spinner loading-sm"></span>
-              ) : isEditMode ? (
-                "Save Changes"
-              ) : (
-                "Onboard User"
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
+        {/* Actions */}
+        <div className="flex justify-end gap-4 mt-6">
+          <button type="button" onClick={() => navigate("/users")} disabled={isSubmitting} className="btn btn-outline rounded-xl px-6">
+            Cancel
+          </button>
+          <button type="submit" disabled={isSubmitting} className="btn btn-primary rounded-xl px-10 shadow-sm">
+            {isSubmitting ? <span className="loading loading-spinner loading-sm"></span> : isEditMode ? "Save Changes" : "Onboard User"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

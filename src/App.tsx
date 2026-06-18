@@ -7,6 +7,8 @@ import DashboardPage from './modules/dashboard/DashboardPage'
 import UserPage from './modules/users/UserPage'
 import UserFormPage from './modules/users/UserFormPage'
 import SystemAdminPage from './modules/system-admin/SystemAdminPage'
+import EmployeeDashboardPage from './modules/employees/EmployeeDashboardPage'
+import EmployeeProfilePage from './modules/employees/EmployeeProfilePage'
 import { ProtectedRoute } from './app/ProtectedRoute'
 
 function App() {
@@ -20,9 +22,11 @@ function App() {
           <Route element={<DashboardLayout />}>
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<DashboardPage />} />
-            <Route path="users" element={<UserPage />} />
+             <Route path="users" element={<UserPage />} />
             <Route path="users/onboard" element={<UserFormPage />} />
             <Route path="users/:id/edit" element={<UserFormPage />} />
+            <Route path="employees" element={<EmployeeDashboardPage />} />
+            <Route path="employees/profile" element={<EmployeeProfilePage />} />
             <Route path="system-admin" element={<SystemAdminPage />} />
             {/* Add more protected routes here */}
           </Route>
