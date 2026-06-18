@@ -5,6 +5,7 @@ import LoginPage from './modules/auth/LoginPage'
 import RegisterPage from './modules/auth/RegisterPage'
 import DashboardPage from './modules/dashboard/DashboardPage'
 import UserPage from './modules/users/UserPage'
+import UserFormPage from './modules/users/UserFormPage'
 import SystemAdminPage from './modules/system-admin/SystemAdminPage'
 import { ProtectedRoute } from './app/ProtectedRoute'
 
@@ -20,6 +21,8 @@ function App() {
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="users" element={<UserPage />} />
+            <Route path="users/onboard" element={<UserFormPage />} />
+            <Route path="users/:id/edit" element={<UserFormPage />} />
             <Route path="system-admin" element={<SystemAdminPage />} />
             {/* Add more protected routes here */}
           </Route>

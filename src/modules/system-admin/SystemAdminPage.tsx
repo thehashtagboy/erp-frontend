@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function SystemAdminPage() {
+  const navigate = useNavigate();
   const subModules = [
     {
       title: "User & Access Management",
@@ -9,6 +10,7 @@ export default function SystemAdminPage() {
       bgClass: "bg-primary/10",
       shape: "large-square",
       gridClass: "md:col-span-2 md:row-span-2",
+      path: "/users",
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="text-primary">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
@@ -114,6 +116,7 @@ export default function SystemAdminPage() {
           return (
             <div
               key={index}
+              onClick={() => module.path && navigate(module.path)}
               className={`group relative overflow-hidden rounded-3xl border border-base-200 bg-base-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer flex 
                 ${isWide ? 'flex-row items-center p-6 gap-6' : 'flex-col p-6 justify-between'} 
                 ${module.gridClass}`}
